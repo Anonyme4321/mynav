@@ -1,0 +1,25 @@
+# MyNav — moteur d'itinéraires auto-hébergé (MOTIS, licence MIT)
+#
+# 1) ./scripts/download-data.sh      télécharge OSM + GTFS dans ./motis/data
+# 2) ./scripts/import.sh             pré-calcule les index (10-30 min, une seule fois)
+# 3) docker compose up -d            démarre l'API sur http://localhost:8080
+#
+# MOTIS fait tout : itinéraires voiture / transports / park & ride,
+# géocodage (recherche d'adresse) et géocodage inverse.
+
+services:
+  motis:
+    image: ghcr.io/motis-project/motis:latest
+    container_name: mynav-motis
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./motis/data:/data
+    working_dir: /data
+    command: ["server"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:8080/api/v1/geocode?text=paris >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5

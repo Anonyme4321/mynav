@@ -1,0 +1,6 @@
+node_modules
+dist
+.DS_Store
+.env
+motis/data/*
+!motis/data/config.yml

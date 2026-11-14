@@ -1,0 +1,29 @@
+# Configuration MOTIS — région de développement : Île-de-France
+# Doc : https://github.com/motis-project/motis (section "Configuration")
+# Les chemins sont relatifs à ce dossier (monté dans /data du conteneur).
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  web_folder: ui
+
+# Réseau routier + adresses + parkings (OpenStreetMap, licence ODbL)
+osm: ile-de-france-latest.osm.pbf
+
+# Horaires de transports en commun (GTFS, données ouvertes transport.data.gouv.fr)
+timetable:
+  first_day: TODAY
+  num_days: 60
+  datasets:
+    idfm:
+      path: idfm-gtfs.zip          # RATP, Transilien, bus IDF (Île-de-France Mobilités)
+    sncf:
+      path: sncf-voyages-gtfs.zip  # TGV / Intercités (optionnel, pour les trajets longs)
+
+# Routage sur le réseau routier : voiture, vélo, marche, et park & ride
+street_routing: true
+osr_footpath: true
+
+# Recherche d'adresse et géocodage inverse, construits à partir d'OSM
+geocoding: true
+reverse_geocoding: true
