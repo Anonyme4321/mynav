@@ -30,6 +30,11 @@ commercialisé (voir *Licences*).
 | Données routières | [OpenStreetMap](https://www.openstreetmap.org/copyright) | ODbL |
 | Horaires | [transport.data.gouv.fr](https://transport.data.gouv.fr) (IDFM, SNCF) | Licence Ouverte / ODbL |
 
+## Démo en ligne
+
+Le front est publié automatiquement sur GitHub Pages à chaque push sur `main` :
+**https://anonyme4321.github.io/mynav/** (mode démo : itinéraires fictifs, pas de serveur MOTIS).
+
 ## Démarrage rapide (mode démo, sans serveur)
 
 ```bash
