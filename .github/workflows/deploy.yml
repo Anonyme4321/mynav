@@ -28,7 +28,10 @@ jobs:
       - run: npm ci
       - run: npm run build
         env:
-          VITE_DEMO: "1"          # pas de serveur MOTIS sur Pages : données fictives
+          # Sans variable MOTIS_URL (Settings → Variables) : mode démo.
+          # Avec : l'app appelle ton serveur MOTIS (voir deploy/README.md).
+          VITE_MOTIS_URL: ${{ vars.MOTIS_URL }}
+          VITE_DEMO: ${{ vars.MOTIS_URL == '' && '1' || '0' }}
           VITE_BASE: /mynav/
       - uses: actions/upload-pages-artifact@v3
         with:
