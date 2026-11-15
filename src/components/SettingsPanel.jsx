@@ -36,6 +36,12 @@ export default function SettingsPanel({ settings, onChange, onReset }) {
       {!settings.hasPass && num('ticketPrice', 'Prix du trajet', 0.1, '€')}
       {num('parkingPR', 'Parking relais', 0.5, '€')}
 
+      <h4>Mon temps</h4>
+      {num('maxExtraPct', 'Temps en plus acceptable', 5, '% du trajet')}
+      {num('maxExtraMin', 'Plafond', 5, 'min')}
+      {num('timeValue', 'Valeur de mon temps (0 = ignorer)', 1, '€/h')}
+      <p className="muted">Au-delà de cette tolérance, un trajet mixte est signalé comme trop lent même s'il fait économiser.</p>
+
       <h4>Émissions</h4>
       {num('co2Car', 'Voiture', 0.01, 'kg CO₂/km')}
       {num('co2Rail', 'Train / métro / tram', 0.001, 'kg CO₂/km')}

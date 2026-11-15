@@ -1,6 +1,6 @@
 import SearchBox from './SearchBox'
 import { modeInfo, DEMO } from '../api/motis'
-import { evaluate, compareToCar, fmtEur, fmtKg, fmtMin, fmtKm } from '../lib/compare'
+import { evaluate, compareToCar, verdict, fmtEur, fmtKg, fmtMin, fmtKm } from '../lib/compare'
 
 const KIND = {
   car: { label: 'Tout voiture', icon: '🚗' },
@@ -19,9 +19,24 @@ export default function ComparePanel({
     const all = [...results.car, ...results.parkride, ...results.transit]
     rows = all.map((it) => ({ it, ev: evaluate(it, settings) }))
     carRef = rows.find((r) => r.it.kind === 'car')?.ev || null
-    rows.forEach((r) => (r.vs = r.it.kind === 'car' ? null : compareToCar(r.ev, carRef)))
+    rows.forEach((r) => {
+      r.vs = r.it.kind === 'car' ? null : compareToCar(r.ev, carRef)
+      r.verdict = r.it.kind === 'car' ? null : verdict(r.ev, carRef, settings)
+    })
   }
-  const best = rows.length ? rows.reduce((a, b) => (b.ev.totalCost < a.ev.totalCost ? b : a)) : null
+
+  // Recommandation globale : la meilleure alternative mixte, si elle vaut le coup
+  const RANK = { great: 0, good: 1, tradeoff: 2, bad: 3 }
+  const alternatives = rows.filter((r) => r.verdict)
+  const bestAlt = alternatives.length
+    ? alternatives.reduce((a, b) => {
+        const d = RANK[a.verdict.level] - RANK[b.verdict.level]
+        return d < 0 ? a : d > 0 ? b : (b.ev.totalCost < a.ev.totalCost ? b : a)
+      })
+    : null
+  const recommended = bestAlt && ['great', 'good'].includes(bestAlt.verdict.level)
+    ? bestAlt
+    : rows.find((r) => r.it.kind === 'car') || null
 
   return (
     <div className="route-form">
@@ -50,17 +65,41 @@ export default function ComparePanel({
 
       {results && rows.length === 0 && <p className="muted">Aucun itinéraire trouvé.</p>}
       {results && DEMO && (
-        <p className="muted">Mode démo : gares réelles, mais durées et tracés simulés (courbes schématiques). Les vrais itinéraires rue par rue viennent du serveur MOTIS.</p>
+        <p className="muted">Mode démo : gares réelles, tracés voiture/marche réels (OSRM), train schématique, durées simulées. Avec le serveur MOTIS, tout devient réel.</p>
+      )}
+
+      {recommended && carRef && (
+        <div className={`headline ${recommended.it.kind === 'car' ? 'neutral' : recommended.verdict.level}`}>
+          {recommended.it.kind === 'car' ? (
+            <>
+              <div className="headline-title">🚗 Sur ce trajet, garde la voiture</div>
+              <div className="headline-detail">
+                {bestAlt
+                  ? `Meilleure alternative : ${KIND[bestAlt.it.kind].label.toLowerCase()}, ${bestAlt.verdict.detail}`
+                  : 'Aucune alternative en transports trouvée.'}
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="headline-title">
+                {recommended.verdict.level === 'great' ? '✅' : '👍'} {KIND[recommended.it.kind].label} : {recommended.verdict.title.toLowerCase()}
+              </div>
+              <div className="headline-detail">{recommended.verdict.detail}</div>
+            </>
+          )}
+          <div className="headline-hint">Tolérance : +{settings.maxExtraPct} % et +{settings.maxExtraMin} min max, réglable dans ⚙️</div>
+        </div>
       )}
 
       {rows.map((r, i) => {
         const k = KIND[r.it.kind]
         const isSel = selected === r.it
         return (
-          <div key={i} className={`option ${isSel ? 'selected' : ''} ${r === best ? 'best' : ''}`} onClick={() => onSelect(r.it)}>
+          <div key={i} className={`option ${isSel ? 'selected' : ''} ${r === recommended ? 'best' : ''}`} onClick={() => onSelect(r.it)}>
             <div className="option-head">
               <span className="option-kind">{k.icon} {k.label}</span>
-              {r === best && rows.length > 1 && <span className="badge">Le moins cher</span>}
+              {r === recommended && rows.length > 1 && <span className="badge">Recommandé</span>}
+              {r.verdict && r !== recommended && <span className={`badge lvl-${r.verdict.level}`}>{r.verdict.title}</span>}
             </div>
 
             <div className="option-stats">
