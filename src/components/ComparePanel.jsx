@@ -1,5 +1,5 @@
 import SearchBox from './SearchBox'
-import { modeInfo } from '../api/motis'
+import { modeInfo, DEMO } from '../api/motis'
 import { evaluate, compareToCar, fmtEur, fmtKg, fmtMin, fmtKm } from '../lib/compare'
 
 const KIND = {
@@ -49,6 +49,9 @@ export default function ComparePanel({
       {error && <p className="error">{error}</p>}
 
       {results && rows.length === 0 && <p className="muted">Aucun itinéraire trouvé.</p>}
+      {results && DEMO && (
+        <p className="muted">Mode démo : gares réelles, mais durées et tracés simulés (courbes schématiques). Les vrais itinéraires rue par rue viennent du serveur MOTIS.</p>
+      )}
 
       {rows.map((r, i) => {
         const k = KIND[r.it.kind]

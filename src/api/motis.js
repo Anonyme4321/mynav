@@ -5,6 +5,7 @@
 
 import { decodePolyline } from '../lib/polyline'
 import * as demo from './demo'
+import { haversine } from '../lib/geo'
 
 const BASE = (import.meta.env.VITE_MOTIS_URL || 'http://localhost:8080').replace(/\/$/, '')
 export const DEMO = import.meta.env.VITE_DEMO === '1'
@@ -95,12 +96,6 @@ function estimateDistance(l) {
   return d
 }
 
-export function haversine([lat1, lon1], [lat2, lon2]) {
-  const R = 6371000, r = Math.PI / 180
-  const dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r
-  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2
-  return 2 * R * Math.asin(Math.sqrt(a))
-}
 
 function toItinerary(it, kind) {
   const legs = it.legs.map(toLeg)
