@@ -124,6 +124,12 @@ src/
   usages. Pour la production, héberge tes tuiles : [Protomaps](https://protomaps.com) (un fichier
   `.pmtiles`, licence BSD) + [MapLibre GL](https://maplibre.org) (BSD), puis règle `VITE_TILE_URL`.
 
+## Héberger MOTIS gratuitement (Oracle Cloud Always Free)
+
+Voir [deploy/README.md](deploy/README.md) : création de la machine ARM gratuite, installation
+automatique par `deploy/setup-server.sh` (MOTIS + HTTPS), puis variable `MOTIS_URL` dans GitHub
+pour que la démo en ligne calcule de vrais itinéraires.
+
 ## Étapes suivantes
 
 1. **Backend** (Node + PostgreSQL) : comptes, favoris synchronisés, historique des trajets et économies
