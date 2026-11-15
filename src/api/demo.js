@@ -61,6 +61,40 @@ export async function reverseGeocode(lat, lon) {
   return { id: `${lat},${lon}`, name: 'Point sur la carte', label: `${lat.toFixed(4)}, ${lon.toFixed(4)}`, lat, lon }
 }
 
+// ---------- Tracés routiers réels (démo uniquement) ----------
+// Le serveur public d'OSRM (logiciel open source, BSD) fournit la géométrie
+// rue par rue des tronçons voiture / marche. Réservé au développement : en
+// production, MOTIS auto-hébergé fournit tous les tracés, rails compris.
+const OSRM = 'https://router.project-osrm.org'
+
+async function osrmLeg(l) {
+  if (!['CAR', 'CAR_PARKING', 'WALK'].includes(l.mode) || l.distance < 100) return l
+  const profile = l.mode === 'WALK' ? 'foot' : 'driving'
+  const url = `${OSRM}/route/v1/${profile}/${l.from.lon},${l.from.lat};${l.to.lon},${l.to.lat}?overview=full&geometries=geojson`
+  try {
+    const ctrl = new AbortController()
+    const t = setTimeout(() => ctrl.abort(), 5000)
+    const res = await fetch(url, { signal: ctrl.signal })
+    clearTimeout(t)
+    if (!res.ok) return l
+    const data = await res.json()
+    const r = data.routes?.[0]
+    if (!r) return l
+    const distance = Math.round(r.distance)
+    // Le serveur public ne calcule que le profil voiture : pour la marche, on
+    // garde la géométrie mais on recalcule la durée à 4,5 km/h.
+    const duration = l.mode === 'WALK' ? Math.round((distance / 1000 / SPEED.WALK) * 3600) : Math.round(r.duration * 1.15 + 120)
+    return { ...l, distance, duration, coords: r.geometry.coordinates.map(([lon, lat]) => [lat, lon]), real: true }
+  } catch {
+    return l
+  }
+}
+
+async function realize(it) {
+  const legs = await Promise.all(it.legs.map(osrmLeg))
+  return itin(it.kind, legs, it.transfers)
+}
+
 // ---------- Simulation ----------
 
 const DETOUR = 1.3 // les rues font ~30 % de plus que le vol d'oiseau
@@ -161,5 +195,11 @@ export async function planAll(from, to) {
     transit.push(itin('transit', [toStation, transfer(sA, 3), railLeg(sA, sB), leg('WALK', sB, to)], toStation.mode === 'BUS' ? 2 : 1))
   }
 
-  return { car, parkride, transit }
+  // Remplace les arcs voiture / marche par de vrais tracés routiers si possible
+  const [carR, prR, trR] = await Promise.all([
+    Promise.all(car.map(realize)),
+    Promise.all(parkride.map(realize)),
+    Promise.all(transit.map(realize)),
+  ])
+  return { car: carR, parkride: prR, transit: trR }
 }
